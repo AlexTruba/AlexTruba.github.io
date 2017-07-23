@@ -12,7 +12,7 @@
 		<!-- jQuery -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 		<!-- Semantic UI -->
-		<link href="http://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.11/semantic.css" rel="stylesheet">
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.11/semantic.css" rel="stylesheet">
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.11/semantic.min.js"></script>
 		<!-- Lato -->
 		<link href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i&amp;subset=latin-ext" rel="stylesheet">
@@ -100,10 +100,9 @@
 		<script>
 			/* Calendar */
 			class Calendar {
-				constructor(element, locale, callback) {
+				constructor(element, locale) {
 					this.element = element;
 					this.locale = locale;
-					this.callback = callback;
 					moment.locale(locale);
 					this.show(moment().year());
 					this.data = [{
@@ -128,6 +127,12 @@
 					        url: "https://www.facebook.com/corest",
 					        avatar: "https://scontent-cdt1-1.xx.fbcdn.net/v/t1.0-9/19959082_10210721389766187_6789533543778955899_n.jpg?oh=204032e8f826891d02c566e5cdcdf384&oe=59C40BCC"
 					    }]
+					  },
+					  {
+					    date: "2016-07-20",
+					    eventId: 0,
+					    event: "Come up with a homework idea",
+					    description: "Well, yeah, you know. You've got to engage the audience, inspire them to do something if not great than warm at least. Something you'll be glad to check on later."
 					  }
 					];
 					this.findReserveDays(this.data);
@@ -148,49 +153,52 @@
 						}
 					}
 					this.element.innerHTML = '<nav><a href="#" class="nav prev" draggable="false"><svg viewBox="0 0 512 512"><path d="M189.8,349.7c3.1-3.1,3-8,0-11.3L123.4,264H408c4.4,0,8-3.6,8-8c0-4.4-3.6-8-8-8H123.4l66.3-74.4c2.9-3.4,3.2-8.1,0.1-11.2c-3.1-3.1-8.5-3.3-11.4-0.1c0,0-79.2,87-80,88S96,253.1,96,256s1.6,4.9,2.4,5.7s80,88,80,88c1.5,1.5,3.6,2.3,5.7,2.3C186.2,352,188.2,351.2,189.8,349.7z"/></svg></a><div class="title"><strong>' + year + '</strong></div><a href="#" class="nav next" draggable="false"><svg viewBox="0 0 512 512"><path d="M322.2,349.7c-3.1-3.1-3-8,0-11.3l66.4-74.4H104c-4.4,0-8-3.6-8-8c0-4.4,3.6-8,8-8h284.6l-66.3-74.4c-2.9-3.4-3.2-8.1-0.1-11.2c3.1-3.1,8.5-3.3,11.4-0.1c0,0,79.2,87,80,88s2.4,2.8,2.4,5.7s-1.6,4.9-2.4,5.7s-80,88-80,88c-1.5,1.5-3.6,2.3-5.7,2.3C325.8,352,323.8,351.2,322.2,349.7z"/></svg></a></nav><div class="YYYY" data-w="' + r + '">' + y + '</div>';
-					this.element.querySelector('.prev').addEventListener('click', () => { this.show(--this.year); });
-					this.element.querySelector('.next').addEventListener('click', () => { this.show(++this.year); });
+					this.element.querySelector('.prev').addEventListener('click', () => { this.show(--this.year);this.findReserveDays(this.data); });
+					this.element.querySelector('.next').addEventListener('click', () => { this.show(++this.year);this.findReserveDays(this.data); });
 				}
 				findReserveDays(data){
-					for (var i = data.length - 1; i >= 0; i--) {
-						console.log(i);
+					for (var i = 0; i < data.length ; i++) {
 						let curr = $(".D[data-date='" + data[i].date + "']");
 						if (curr!=null) {
 							curr.addClass("reserved");
 						}
 					}
-					this.element.querySelectorAll('.D.reserved').forEach((element) => element.addEventListener('click', (event) => { this.callback(event.target.getAttribute('data-date'),this.data); }));
+					this.addClickListener(this.data);
+				}
+				addClickListener(data){
+					$(".D.reserved .content").click(function(){
+						let date = $(this).parent().attr("data-date");
+						let currEvents = data.filter(function(element){
+							return element.date==date;
+						});
+						if (currEvents.length!=0) {
+							let text = "";
+							for (var i = 0; i <currEvents.length ; i++) {
+								text += `<div class="header">`+currEvents[i].event+`</div>
+										 <div class="content"> `+currEvents[i].description+`</div>`;
+
+								if (currEvents[i].participants!=null) {
+									text+=`<div class="participants">Participants</div><div class="participants">`;
+									for (var j = 0; j <currEvents[i].participants.length ; j++) {
+										text += `<div class="single">
+											  		<a href="`+currEvents[i].participants[j].url +`"><img src="`+currEvents[i].participants[j].avatar+`" alt=""></a>
+											  		<div class="name">`+currEvents[i].participants[j].name+`</div>
+											  	</div>`;
+									}
+									text +=`</div>`;
+								}
+							}
+							text +=	`<div class="actions">
+										<div class="ui green button ok">Ок</div>
+									</div>`;
+							$(".modal").html(text);
+							$(".modal").modal("show");
+						}
+					});
 				}
 			}
-			
-			new Calendar(document.getElementById('calendar'), 'en', function(date,data) {
-				let curr = data.filter(function(element){
-					return element.date==date;
-				});
-				if (curr.length!=0) {
-					let text = "";
-					for (var i = 0; i <curr.length ; i++) {
-						text += `<div class="header">`+curr[i].event+`</div>
-								 <div class="content"> `+curr[i].description+`</div>`;
 
-						if (curr[i].participants!=null) {
-							text+=`<div class="participants">Participants</div><div class="participants">`;
-							for (var j = 0; j <curr[i].participants.length ; j++) {
-								text += `<div class="single">
-									  		<a href="`+curr[i].participants[j].url +`"><img src="`+curr[i].participants[j].avatar+`" alt=""></a>
-									  		<div class="name">`+curr[i].participants[j].name+`</div>
-									  	</div>`;
-							}
-							text +=`</div>`;
-						}
-					}
-					text +=	`<div class="actions">
-								<div class="ui green button ok">Ок</div>
-							</div>`;
-					$(".modal").html(text);
-					$(".modal").modal("show");
-				}
-			});
+			new Calendar(document.getElementById('calendar'), 'en');
 		</script>
 	</body>
 </html>
